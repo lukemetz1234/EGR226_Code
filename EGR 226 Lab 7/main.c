@@ -1,5 +1,6 @@
 #include "msp.h"
 
+void pin_init();
 void LCD_init();
 void pushNibble(uint8_t nibble);
 void pushByte(uint8_t byte);
@@ -15,6 +16,13 @@ void main(void)
 	//test test
 }
 
+void pin_init() {
+    P6->SEL0 &= ~BIT1;  //Set up pins P6.1 (E)
+    P6->SEL1 &= ~BIT1;
+    P6->DIR |= BIT1;   //Output
+
+}
+
 void LCD_init() {
 
 
@@ -28,10 +36,13 @@ void pushNibble(uint8_t nibble) {
 
 
 void pushByte(uint8_t byte) {
+<<<<<<< HEAD
     pushNibble(byte >> 4);
     pulseEnablePin();
     pushNibble(byte & 0x0F);
     pulseEnablePin();
+=======
+>>>>>>> branch 'master' of https://github.com/lukemetz1234/EGR226_Code.git
 
 }
 
@@ -41,12 +52,11 @@ void commandWrite(uint8_t command) {
 
 }
 
-
-void delay_ms(int value) {
-
-
+void pulseEnablePin() {
+    P6->OUT |= BIT1;
+    delay_ms(10);
+    P6->OUT &= ~BIT1;
 }
-
 
 void delay_ms(int value)
 {
