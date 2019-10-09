@@ -13,15 +13,22 @@ void delay_micro(int value);
 void main(void)
 {
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
-
 	pin_init();
 	LCD_init();
+
+	while(1) {
+
+	}
 }
 
 void pin_init() {
     P6->SEL0 &= ~BIT1;  //Set up pins P6.1 (E)
     P6->SEL1 &= ~BIT1;
     P6->DIR |= BIT1;   //Output
+
+    P6->SEL0 &= ~BIT0;  //Set up pins P6.1 (E)
+    P6->SEL1 &= ~BIT0;
+    P6->DIR |= BIT0;   //Output
 
     P4->SEL0 &= ~(BIT0 | BIT1 | BIT2 | BIT3);  //Set up pins
     P4->SEL1 &= ~(BIT0 | BIT1 | BIT2 | BIT3);
@@ -36,25 +43,27 @@ void LCD_init() {
      delay_micro(200);
      commandWrite(0x30);
      delay_ms(100);
-     commandWrite(0x20);
+
+     commandWrite(2);
      delay_micro(100);
-     commandWrite(0x20);
+     commandWrite(2);
      delay_micro(100);
-     commandWrite(0x80);
+
+     commandWrite(8);
      delay_micro(100);
      commandWrite(0x0C);
      delay_micro(100);
-     commandWrite(0x10);
+     commandWrite(1);
      delay_micro(100);
-     commandWrite(0x60);
+     commandWrite(6);
      delay_ms(10);
-
+     commandWrite(1);
 }
 
 
 void pushNibble(uint8_t nibble) {
     P4->OUT &=~0x0F;
-    P5->OUT |= (nibble &0x0F);
+    P5->OUT |= (nibble & 0x0F);
 }
 
 
@@ -67,6 +76,7 @@ void pushByte(uint8_t byte) {
 
 
 void commandWrite(uint8_t command) {
+    P6->OUT &= ~BIT0;
     pushByte(command);
     pulseEnablePin();
 }
