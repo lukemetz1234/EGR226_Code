@@ -22,14 +22,16 @@ void LCD_init() {
 
 
 void pushNibble(uint8_t nibble) {
-
-
-
+    P4->OUT &=~0x0F;
+    P5->OUT |= (nibble &0x0F);
 }
 
 
 void pushByte(uint8_t byte) {
-
+    pushNibble(byte >> 4);
+    pulseEnablePin();
+    pushNibble(byte & 0x0F);
+    pulseEnablePin();
 
 }
 
