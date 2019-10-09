@@ -5,6 +5,7 @@ void pushNibble(uint8_t nibble);
 void pushByte(uint8_t byte);
 void commandWrite(uint8_t command);
 void delay_ms(int value);
+void pulseEnablePin();
 
 
 void main(void)
@@ -13,6 +14,37 @@ void main(void)
 
 	//test test
 }
+
+void LCD_init() {
+
+
+}
+
+
+void pushNibble(uint8_t nibble) {
+
+
+
+}
+
+
+void pushByte(uint8_t byte) {
+
+
+}
+
+
+void commandWrite(uint8_t command) {
+
+
+}
+
+
+void delay_ms(int value) {
+
+
+}
+
 
 void delay_ms(int value)
 {
