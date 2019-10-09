@@ -30,24 +30,24 @@ void pin_init() {
 }
 
 void LCD_init() {
-    write_command(3);
-     Systick_ms_delay(100);
-     write_command(3);
-     Systick_us_delay(200);
-     write_command(3);
-     Systick_ms_delay(100);
-     write_command(2);
-     Systick_us_delay(100);
-     write_command(2);
-     Systick_us_delay(100);
-     write_command(8);
-     Systick_us_delay(100);
-     write_command(0x0C);
-     Systick_us_delay(100);
-     write_command(1);
-     Systick_us_delay(100);
-     write_command(6);
-     Systick_ms_delay(10);
+     commandWrite(0x30);
+     delay_ms(100);
+     commandWrite(0x30);
+     delay_micro(200);
+     commandWrite(0x30);
+     delay_ms(100);
+     commandWrite(0x20);
+     delay_micro(100);
+     commandWrite(0x20);
+     delay_micro(100);
+     commandWrite(0x80);
+     delay_micro(100);
+     commandWrite(0x0C);
+     delay_micro(100);
+     commandWrite(0x10);
+     delay_micro(100);
+     commandWrite(0x60);
+     delay_ms(10);
 
 }
 
