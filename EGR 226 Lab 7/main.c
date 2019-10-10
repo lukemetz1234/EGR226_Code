@@ -26,11 +26,11 @@ void pin_init() {
     P6->SEL1 &= ~BIT1;
     P6->DIR |= BIT1;   //Output
 
-    P6->SEL0 &= ~BIT0;  //Set up
+    P6->SEL0 &= ~BIT0;  //Set up RS
     P6->SEL1 &= ~BIT0;
     P6->DIR |= BIT0;   //Output
 
-    P4->SEL0 &= ~(BIT0 | BIT1 | BIT2 | BIT3);  //Set up pins
+    P4->SEL0 &= ~(BIT0 | BIT1 | BIT2 | BIT3);  //Set up data pins
     P4->SEL1 &= ~(BIT0 | BIT1 | BIT2 | BIT3);
     P4->DIR |= (BIT0 | BIT1 | BIT2 | BIT3);   //Output
     P4->OUT &= ~(BIT0 | BIT1 | BIT2 | BIT3);
