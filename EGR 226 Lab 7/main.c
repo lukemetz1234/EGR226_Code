@@ -9,6 +9,13 @@ void delay_ms(int value);
 void pulseEnablePin();
 void delay_micro(int value);
 
+/******************************
+Added in Lecture (probably not finished)
+char display[65];           //what to put on the display
+char currentDisplay[65];    //Currently on it
+******************************/
+
+
 
 void main(void)
 {
@@ -22,6 +29,20 @@ void main(void)
 }
 
 void pin_init() {
+
+    /*************************
+     Added in lecture
+     Not finished
+
+    for(int i = 0; i < 65; i++) {
+        currentDisplay[i] = " ";
+        display[i] = " ";
+    }
+
+    ************************/
+
+
+
     P6->SEL0 &= ~BIT1;  //Set up pins P6.1 (E)
     P6->SEL1 &= ~BIT1;
     P6->DIR |= BIT1;   //Output
