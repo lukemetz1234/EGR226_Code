@@ -12,7 +12,7 @@
 
 
 /***| LCDpin_init() |************************************//*
-*Brief:    This function initializes all of the pins that the LCD displat is connected to
+*Brief:    This function initializes all of the pins that the LCD display is connected to
 *Params:
 *            null
 *Returns:
