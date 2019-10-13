@@ -25,15 +25,34 @@ void main(void)
 	pin_init();
 	LCD_init();
 
-	char name[8] = {'L', 'U', 'K', 'E'};        //Put whatever you want to print in a character array with the correct length
+	char name1[4] = {'L', 'U', 'K', 'E'};        //Put whatever you want to print in a character array with the correct length
+	char name2[5] = {'B', 'R', 'I', 'A', 'N'};
+	char class[3] = {'E', 'G', 'R'};
+	char classNum[3] = {'2', '2', '6'};
 	int j = 1;
 	int k = 0;
 	while(1) {
 	    if (j == 1) {                           //This is so that it dose not repeat forever
+	        commandWrite(0x86);                 //address  06
 	        for(k = 0; k < 4; k++) {
-	            dataWrite(name[k]);     //Write each letter
-	            delay_ms(500);
+	            dataWrite(name1[k]);             //Write each letter
+	            delay_ms(10);
 	        }
+	        commandWrite(0xC5);
+	        for(k = 0; k < 5; k++) {
+	            dataWrite(name2[k]);             //Write each letter
+	            delay_ms(10);
+	        }
+	        commandWrite(0x96);
+            for(k = 0; k < 3; k++) {
+                dataWrite(class[k]);             //Write each letter
+                delay_ms(10);
+            }
+            commandWrite(0xD6);
+            for(k = 0; k < 3; k++) {
+                dataWrite(classNum[k]);             //Write each letter
+                delay_ms(10);
+            }
 	    }
 	    j++;
 	}
@@ -51,8 +70,6 @@ void pin_init() {
     }
 
     ************************/
-
-
 
     P6->SEL0 &= ~BIT1;  //Set up pins P6.1 (E)
     P6->SEL1 &= ~BIT1;
