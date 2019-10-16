@@ -19,6 +19,7 @@ void main(void)
 	LCDpin_init();  //Set up pins connected to the LCD display
 	LCD_init();     //Sequence to properly initialize LCD
 
+
 	char name1[4] = {'L', 'U', 'K', 'E'};       //Partner 1 name
 	char name2[5] = {'B', 'R', 'I', 'A', 'N'};  //Partner 2 name
 	char class[3] = {'E', 'G', 'R'};            //Course
