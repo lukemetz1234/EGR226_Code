@@ -61,10 +61,10 @@ void setupKeypad() {
 *Returns:
 *            key
 *
-*            NOTE: Not working 100% properly because my READ and STORE positions are being messed up.
+*            *NOTE: Not working 100% properly because my READ and STORE positions are being messed up.
 *                  The READ position is not always in sync with the very first STORE position, this means
 *                  the READ position could be on a -1, causing main to believe that no key presses were hit.
-*                  If 4 or more keys are pressed, they print out fine because there is no chance that the
+*                  If 4 or more keys are pressed, they all print out because there is no chance that the
 *                  READ position will be on a -1.
 ********************************************************/
 int getKeypress() {
