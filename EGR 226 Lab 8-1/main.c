@@ -1,3 +1,12 @@
+/*******************************************************
+* Name:              Luke Metz, Brian Koelzer
+* Course:            EGR 226 - Microcontroller Programming and Applications
+* Project:           Lab 08-1 Creating a Pulse Width Modulated (PWM) Pseudo Analog Voltage Using
+*                    Timer Peripherals of a Microcontroller
+* File:              main.c
+* Description:       This program controls the speed of a motor using the SysTick timer as a PWM signal.
+*******************************************************/
+
 #include "msp.h"
 
 void pinSetup();
@@ -12,16 +21,16 @@ void main(void)
 	pinSetup();
 
 
-    P2->SEL0 |=  BIT6;  //giving timerA control of P6.7
-    P2->SEL1 &= ~BIT6;  //Now control it through TimerA2.4
-    P2->DIR  |=  BIT6;
+    P2->SEL0 |=  BIT6;
+    P2->SEL1 &= ~BIT6;
+    P2->DIR  |=  BIT6;  //Output
 
 
 	while(1) {
-	    P2->OUT |= BIT7;
-	    delay_ms(ONTIME);
-	    P2->OUT &= ~BIT7;
-	    delay_ms(PERIOD-ONTIME);
+	    P2->OUT |= BIT7;            //Turn on
+	    delay_ms(ONTIME);           //Delay for ontime
+	    P2->OUT &= ~BIT7;           //Turn off
+	    delay_ms(PERIOD-ONTIME);    //Delay off time
 	}
 
 }
