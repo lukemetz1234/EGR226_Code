@@ -49,7 +49,6 @@ void pinSetup() {
     __enable_interrupts();
 }
 
-
 void PORT4_IRQHandler()
 {
     if(P4->IFG & BIT0) {        //Check for stop button

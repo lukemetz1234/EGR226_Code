@@ -43,6 +43,7 @@ void main(void)
     }
 }
 
+
 /***| SysTick_IRQ_Init() |************************************//*
 *Brief:    This function runs as an initialization for the systick timer
 *Params:
@@ -57,6 +58,7 @@ void SysTick_IRQ_Init()
     SysTick->LOAD = 6000000;        //One second
     NVIC_EnableIRQ(SysTick_IRQn);   //Enable interrupt
 }
+
 
 /***| SysTick_Handler() |************************************//*
 *Brief:    This function runs every time an interrupt on the systick timer is triggered

@@ -85,6 +85,7 @@ void main(void)
     }
 }
 
+
 /***| PORT2_IRQHandler() |************************************//*
 *Brief:    This function runs every time an interrupt on port 2 is triggered
 *Params:
