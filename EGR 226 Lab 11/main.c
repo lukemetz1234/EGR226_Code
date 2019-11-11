@@ -1,9 +1,16 @@
+/*******************************************************
+* Name:              Luke Metz, Brian Koelzer
+* Course:            EGR 226 - Microcontroller Programming and Applications
+* Project:           Lab 11 IR Emitting and Precise Input Timing with TimerA
+* File:              main.c
+* Description:       This program reads the current voltage on P5.1 which is connected to a temperature sensor. Based on
+*                    the voltage reading, it is converted into degrees and printed out to the user via the LCD display
+*                    used in a previous lab. A button is interfaced to allow for switching between degrees C and
+*                    degrees F.
+*******************************************************/
+
 #include "msp.h"
 #include <stdio.h>
-
-/**
- * main.c
- */
 
 uint16_t firstVal,secondVal,period;
 
