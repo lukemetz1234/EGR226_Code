@@ -1,3 +1,4 @@
 void setUpKeypad();
-int read_Keypad();
-void delay_ms(int value);
+void PORT5_IRQHandler();
+void defaultState();
+int getKey();

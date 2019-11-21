@@ -1,109 +1,332 @@
 #include "msp.h"
 #include "keypad.h"
+#include <stdio.h>
 
-/***| setUpKeypad() |************************************//*
-*Brief:    This function initializes all of the pins that the keypad is connected to. Each
-*          pin is set as an input with a pull up resistor.
-*Params:
-*            null
-*Returns:
-*            null
-********************************************************/
-void setUpKeypad() {
-    P6->SEL0 &= ~(BIT6|BIT7);  //Set up pins P6.4 and P6.5
-    P6->SEL1 &= ~(BIT6|BIT7);
-    P6->DIR &= ~(BIT6|BIT7);   //Input
-    P6->REN |= (BIT6|BIT7);    //Enables internal resistor
-    P6->OUT |= (BIT6|BIT7);    //Pull up resistor
+int keyP = -1;
+uint8_t reg;
 
-    P5->SEL0 &= ~(BIT6|BIT1);  //Set up pins P4.1, P4.3, and P4.6
-    P5->SEL1 &= ~(BIT6|BIT1);
-    P5->DIR &= ~(BIT6|BIT1);   //Input
-    P5->REN |= (BIT6|BIT1);    //Enables internal resistor
-    P5->OUT |= (BIT6|BIT1);    //Pull up resistor
+void setUpKeypad();
+void PORT5_IRQHandler();
+void defaultState();
 
-    P2->SEL0 &= ~BIT3;  //Set up pin P1.5
-    P2->SEL1 &= ~BIT3;
-    P2->DIR &= ~BIT3;   //Input
-    P2->REN |= BIT3;    //Enables internal resistor
-    P2->OUT |= BIT3;    //Pull up resistor
+/*
+void main(void)
+{
+    WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;     // stop watchdog timer
+    NVIC_EnableIRQ(PORT5_IRQn);
+    __enable_interrupts();
+    setUpKeypad();
+    defaultState();
 
-    P3->SEL0 &= ~(BIT5|BIT7);  //Set up pin P3.3
-    P3->SEL1 &= ~(BIT5|BIT7);
-    P3->DIR &= ~(BIT5|BIT7);   //Input
-    P3->REN |= (BIT5|BIT7);    //Enables internal resistor
-    P3->OUT |= (BIT5|BIT7);    //Pull up resistor
+    while(1) {
+        __delay_cycles(300);
+        if(reg != 0x00)
+            keyP = -1;
+        if(keyP != -1) {
+            printf("Key = %d\n", keyP);
+        }
+        reg = reg << 1;
+        reg |= 1;
+    }
+}
+*/
+int getKey() {
+    if(reg != 0x00)
+        keyP = -1;
+    if(keyP != -1) {
+        printf("Key = %d\n", keyP);
+    }
+    reg = reg << 1;
+    reg |= 1;
+    return keyP;
 }
 
+void setUpKeypad() {
+    //Columns
+    P5->SEL0 &= ~(BIT6|BIT1|BIT2);
+    P5->SEL1 &= ~(BIT6|BIT1|BIT2);
+    P5->DIR &= ~(BIT6|BIT1|BIT2);   //Input
+    P5->REN |= (BIT6|BIT1|BIT2);    //Enables internal resistor
+    P5->OUT |= (BIT6|BIT1|BIT2);    //Pull up resistor
+    P5->IE  |= (BIT6|BIT1|BIT2);
+    P5->IES |= (BIT6|BIT1|BIT2);    //Edge select
 
-int read_Keypad() {
-    setUpKeypad();        //Calls setUpKeypad to ensure all pins are input, pull up resistor
-    __delay_cycles(30000);   //Small delay to ensure the pins are properly set
+    //Rows
+    P2->SEL0 &= ~(BIT4|BIT5|BIT6|BIT7);  //Set up pin P1.5
+    P2->SEL1 &= ~(BIT4|BIT5|BIT6|BIT7);
+    P2->DIR |= (BIT4|BIT5|BIT6|BIT7);   //Output
+    P2->OUT &= ~(BIT4|BIT5|BIT6|BIT7);    //Output a 0
+}
 
-    P3->DIR |= BIT7;    //Set P3.3 to an output
-    P3->OUT &= ~BIT7;   //Output a 0
-    __delay_cycles(30000);       //Delay to ensure pin state change
-    if((P2->IN & BIT3) == 0) {          //Check for the pound key being pressed
-        while((P2->IN & BIT3) == 0);
-        return 10; //pound
-    }
-    if((P6->IN & BIT7) == 0) {          //Check for 9 button
-        while((P6->IN & BIT7) == 0);
-        return 9;
-    }
-    if((P6->IN & BIT6) == 0) {          //Check for 6 button
-        while((P6->IN & BIT6) == 0);
-        return 6;
-    }
-    if((P5->IN & BIT6) == 0) {          //Check for 3 button
-        while((P5->IN & BIT6) == 0);
-        return 3;
-    }
-    setUpKeypad();        //Call setUpKeypad again to reset P3.3
-    __delay_cycles(30000);
+void defaultState() {
+    P5->DIR &= ~(BIT6|BIT1|BIT2);   //Input
+    P5->REN |= (BIT6|BIT1|BIT2);    //Enables internal resistor
+    P5->OUT |= (BIT6|BIT1|BIT2);    //Pull up resistor
 
-    P3->DIR |= BIT5;    //Set P4.1 as an output
-    P3->OUT &= ~BIT5;   //Output a 0
-    delay_ms(10);
-    if((P2->IN & BIT3) == 0) {          //Check for 0 button
-        while((P2->IN & BIT3) == 0);
-        return 0;
+    P2->DIR |= (BIT4|BIT5|BIT6|BIT7);   //Output
+    P2->OUT &= ~(BIT4|BIT5|BIT6|BIT7);    //Output a 0
+}
+
+void PORT5_IRQHandler(){
+    setUpKeypad();
+    //__delay_cycles(30);
+
+    if((P5->IN & BIT6) ==  0) {
+        //Column 1
+        P5->DIR |= (BIT6|BIT1|BIT2);   //Output
+        P5->OUT &= ~(BIT6|BIT1|BIT2);    //Output a 0
+        //__delay_cycles(30);
+
+        P2->DIR &= ~(BIT4|BIT5|BIT6|BIT7);   //Input
+        P2->REN |= (BIT4|BIT5|BIT6|BIT7);    //Enables internal resistor
+        P2->OUT |= (BIT4|BIT5|BIT6|BIT7);    //Pull up
+        //__delay_cycles(30);
+
+        if((P2->IN & BIT4) == 0) {
+            while(1) {
+                if((P2->IN & BIT4) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 11;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT5) == 0) {
+            while(1) {
+                if((P2->IN & BIT5) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 9;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT6) == 0) {
+            while(1) {
+                if((P2->IN & BIT6) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 6;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT7) == 0) {
+            while(1) {
+                if((P2->IN & BIT7) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 3;
+                    break;
+                }
+            }
+        }
     }
-    if((P6->IN & BIT7) == 0) {          //Check for 8 button
-        while((P6->IN & BIT7) == 0);
-        return 8;
+    else if((P5->IN & BIT1) == 0) {
+        //Column 2
+        P5->DIR |= (BIT6|BIT1|BIT2);   //Output
+        P5->OUT &= ~(BIT6|BIT1|BIT2);    //Output a 0
+        //__delay_cycles(30);
+
+        P2->DIR &= ~(BIT4|BIT5|BIT6|BIT7);   //Input
+        P2->REN |= (BIT4|BIT5|BIT6|BIT7);    //Enables internal resistor
+        P2->OUT |= (BIT4|BIT5|BIT6|BIT7);    //Pull up
+
+        //__delay_cycles(30);
+        if((P2->IN & BIT4) == 0) {
+            while(1) {
+                if((P2->IN & BIT4) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 0;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT5) == 0) {
+            while(1) {
+                if((P2->IN & BIT5) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 8;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT6) == 0) {
+            while(1) {
+                if((P2->IN & BIT6) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 5;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT7) == 0) {
+            while(1) {
+                if((P2->IN & BIT7) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 2;
+                    break;
+                }
+            }
+        }
     }
-    if((P6->IN & BIT6) == 0) {          //Check for 5 button
-        while((P6->IN & BIT6) == 0);
-        return 5;
+    else if((P5->IN & BIT2) == 0) {
+        //Column 3
+        P5->DIR |= (BIT6|BIT1|BIT2);   //Output
+        P5->OUT &= ~(BIT6|BIT1|BIT2);    //Output a 0
+        //__delay_cycles(30);
+
+        P2->DIR &= ~(BIT4|BIT5|BIT6|BIT7);   //Input
+        P2->REN |= (BIT4|BIT5|BIT6|BIT7);    //Enables internal resistor
+        P2->OUT |= (BIT4|BIT5|BIT6|BIT7);    //Pull up
+        //__delay_cycles(30);
+
+        if((P2->IN & BIT4) == 0) {
+            while(1) {
+                if((P2->IN & BIT4) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 10;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT5) == 0) {
+            while(1) {
+                if((P2->IN & BIT5) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 7;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT6) == 0) {
+            while(1) {
+                if((P2->IN & BIT6) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 4;
+                    break;
+                }
+            }
+        }
+        else if((P2->IN & BIT7) == 0) {
+            while(1) {
+                if((P2->IN & BIT7) == 0)
+                    reg = reg << 1;
+                else {
+                    reg = reg << 1;
+                    reg |= 0b1;
+                }
+                if(reg == 0xFF) {
+                    keyP = -1;
+                    break;
+                }
+                else if(reg == 0x00) {
+                    keyP = 1;
+                    break;
+                }
+            }
+        }
     }
-    if((P5->IN & BIT6) == 0) {          //Check for 2 buton
-        while((P5->IN & BIT6) == 0);
-        return 2;
+    else {
+        keyP = -1;
     }
     setUpKeypad();
-
-    P5->DIR |= BIT1;    //Set up P4.3 as an output
-    P5->OUT &= ~BIT1;   //Output a 0
-    __delay_cycles(30000);
-
-    if((P2->IN & BIT3) == 0) {          //Check for * button
-        while((P2->IN & BIT3) == 0);
-        return 11;  //*
-    }
-    if((P6->IN & BIT7) == 0) {          //Check for 7 button
-        while((P6->IN & BIT7) == 0);
-        return 7;
-    }
-    if((P6->IN & BIT6) == 0) {          //Check for 4 button
-        while((P6->IN & BIT6) == 0);
-        return 4;
-    }
-    if((P5->IN & BIT6) == 0) {          //Check for 1 button
-        while((P5->IN & BIT6) == 0);
-        return 1;
-    }
-    setUpKeypad();
-
-    return -1;      //If no button is pressed, return a -1
+    //__delay_cycles(30);
+    P5->IFG &= ~(BIT6|BIT1|BIT2);       //clear (Acknowledge) flag
 }

@@ -3,6 +3,8 @@
 #include "keypad.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 void dispense(int item);
 void return_Change(int change);
@@ -31,22 +33,21 @@ void TA2_N_IRQHandler();
 uint8_t state = 0;
 double cash = 0.75;
 int8_t key = -1;
-int PRINTINGF = 0;
 
 void main(void)
 {
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
 
-	LCDpin_init();
 	LCD_init();
 	setUpKeypad();
 
 	//Welcome screen
     displayWelcome();
-	delay_ms(300);
+	delay_ms(3000);
 	//-------------
 
     TA2_IRQ_Init();         //TA2 interrupt initialization
+    NVIC_EnableIRQ(PORT5_IRQn);
     __enable_interrupts();
 
 	while(1) {
@@ -56,7 +57,7 @@ void main(void)
 	            state = MAIN_MENU;
 	        break;
 	        case MAIN_MENU:
-	            display_main_menu();
+	            //display_main_menu();
 	            if(key == 1) {
 	                if(cash >= ITEM_1_COST) {
 	                    dispense_menu(key, 1, ITEM_1_COST);
@@ -152,122 +153,66 @@ void greenLED(int state) {
 }
 
 void display_main_menu() {
-    //PRINTINGF = 1;
     char str1[8] = {'C', 'a', 's', 'h', ':', ' ', ' ', '$'};
     char str2[12] = {'S', 'e', 'l', 'e', 'c', 't', 'i', 'o', 'n', ':', ' ', '_'};
     char str3[8] = {'[', '*', ']', 'A', 'd', 'm', 'i', 'n'};
-    char cashBuffer[4] = {0};
-/*
-    sprintf(cashBuffer, "%lf", cash);
+    char cashBuffer[5] = {0};
+
+    //sprintf(cashBuffer, "%4.2lf/0", cash);
 
     int k = 0;
     commandWrite(0x80);         //Address  80
 
     for(k = 0; k < 8; k++) {
         dataWrite(str1[k]);
-        delay_micro(1);
+        delay_us(1);
     }
     for(k = 0; k < 4; k++) {
         dataWrite(cashBuffer[k]);
-        delay_micro(1);
+        delay_us(1);
     }
 
     commandWrite(0xC0);         //Address  C0
     for(k = 0; k < 12; k++) {
         dataWrite(str2[k]);
-        delay_micro(1);
+        delay_us(1);
     }
 
     commandWrite(0xD0);         //Address D0
     for(k = 0; k < 8; k++) {
         dataWrite(str3[k]);
-        delay_micro(1);
+        delay_us(1);
     }
-    //PRINTINGF = 0;     */
+    return;
 }
 
 void dispense_menu(int selection, int enough, double price) {
-    PRINTINGF = 1;
-    char str1[8] = {'C', 'a', 's', 'h', ':', ' ', ' ', '$'};
-    char str2[11] = {'S', 'e', 'l', 'e', 'c', 't', 'i', 'o', 'n', ':', ' '};
-    char str3[9] = {'D', 'i', 's', 'p', 'e', 'n', 's', 'e', 'd'};
-    char str4[16] = {'N', 'o', 't', ' ', 'e', 'n', 'o', 'u', 'g', 'h', ' ', 'm', 'o', 'n', 'e', 'y'};
-    char str5[8] = {'C', 'h', 'a', 'n', 'g', 'e', ':', ' '};
-    char str6[6] = {'N', 'e', 'e', 'd', ':', ' '};
-    char keyBuffer[1] = {0};
-    char cashBuffer[4] = {0};
-    char changeBuffer[4] = {0};
-    char needBuffer[4] = {0};
-
     double totChange = 0.0;
     double totNeed = 0.0;
 
     totChange = cash - price;
     totNeed = (price - cash);
 
-    sprintf(keyBuffer, "%d", key);           //Parses out key variable into an array
-    sprintf(cashBuffer, "%lf", cash);
-    sprintf(changeBuffer, "%lf", totChange);
-    sprintf(needBuffer, "%lf", totNeed);
+    char dispMenu[65] = {0};
 
-    int k = 0;
-    commandWrite(0x80);         //Address  80
-
-    for(k = 0; k < 8; k++) {
-        dataWrite(str1[k]);
-        delay_micro(1);
-    }
-    for(k = 0; k < 4; k++) {
-        dataWrite(cashBuffer[k]);
-        delay_micro(1);
-    }
-
-    commandWrite(0xC0);         //Address  C0
-    for(k = 0; k < 11; k++) {
-        dataWrite(str2[k]);
-        delay_micro(1);
-    }
-    dataWrite(keyBuffer[0]);
-
-    commandWrite(0x90);         //Address 90
     if(enough == 1) {
-        for(k = 0; k < 9; k++) {
-            dataWrite(str3[k]);
-            delay_micro(1);
-        }
-        commandWrite(0xD0);         //Address D0
-        for(k = 0; k < 8; k++) {
-            dataWrite(str5[k]);
-            delay_micro(1);
-        }
-        for(k = 0; k < 4; k++) {
-            dataWrite(changeBuffer[k]);
-            delay_micro(1);
-        }
+        sprintf(dispMenu, "Cash:  $%4.2lf     Selection: %d    Dispensed       Change: %4.2lf", cash, key, totChange);
+        strcpy(nextDisplay, dispMenu);
     }
     else {
-        for(k = 0; k < 16; k++) {
-            dataWrite(str4[k]);
-            delay_micro(1);
-        }
-        commandWrite(0xD0);         //Address D0
-        for(k = 0; k < 6; k++) {
-            dataWrite(str6[k]);
-            delay_micro(1);
-        }
-        for(k = 0; k < 4; k++) {
-            dataWrite(needBuffer[k]);
-            delay_micro(1);
-        }
+        sprintf(dispMenu, "Cash:  $%4.2lf     Selection: %d", cash, key);
+        strcpy(nextDisplay, dispMenu);
     }
-    PRINTINGF = 0;
 }
 
 void displayWelcome() {
+    commandWrite(0x02);
     char name1[4] = {'L', 'U', 'K', 'E'};       //Partner 1 name
     char name2[5] = {'B', 'R', 'I', 'A', 'N'};  //Partner 2 name
     char vend[16] = {'V', 'E', 'N', 'D', 'I', 'N', 'G', ' ', 'M', 'A', 'C', 'H', 'I', 'N', 'E', '!'};
 
+    strcpy(nextDisplay, "    Luke         Brian       Vending Machine!");
+    /*
     int k = 0;
     commandWrite(0x86);         //Address  86
 
@@ -287,7 +232,7 @@ void displayWelcome() {
         dataWrite(vend[k]);     //Write each letter of VENDING MACHINE
         delay_ms(1);
     }
-
+*/
     commandWrite(0x0C);     //Turn off cursor
 }
 
@@ -302,7 +247,7 @@ void TA2_IRQ_Init()
 {
     TIMER_A2->EX0 = 2;                      //divide by 3
     TIMER_A2->CTL = 0b0000001011010110;     // interrupt enable, /8, up mode, SMCLK
-    TIMER_A2->CCR[0] = 3000;                  //Very small value so that readKeypress is continuously called    //30
+    TIMER_A2->CCR[0] = 3000;                  //Very small value so that readKeypress is continuously called
     NVIC_EnableIRQ(TA2_N_IRQn);             //Enable
 }
 
@@ -315,11 +260,6 @@ void TA2_IRQ_Init()
 ********************************************************/
 void TA2_N_IRQHandler()
 {
-    if(PRINTINGF == 0) {
-        key = read_Keypad();         //Reads a key press
-    }
-    else {
-        key = -1;
-    }
+    key = getKey();
     TIMER_A2->CTL &= ~BIT0; //clear interrupt
 }
