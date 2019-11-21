@@ -6,17 +6,13 @@
 * Description:       This file holds the headers for the LCD.c file
 *******************************************************/
 
-extern char nextDisplay[65];
-
+void LCDpin_init();
 void LCD_init();
-void pulseEnable();
-void pushByte(uint8_t data);
 void pushNibble(uint8_t nibble);
-void commandWrite(uint8_t data);
-void initializeDisplay();
-void delay_ms(int ms);
-void delay_us(int us);
-void setupLCD();
-void setupTimerA3();
-void writeString(char *string);
+void pushByte(uint8_t byte);
+void commandWrite(uint8_t command);
 void dataWrite(uint8_t data);
+void delay_ms(int value);
+void pulseEnablePin();
+void delay_micro(int value);
+void writeString(char *string);

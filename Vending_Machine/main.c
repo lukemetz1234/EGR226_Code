@@ -38,12 +38,13 @@ void main(void)
 {
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
 
+	LCDpin_init();
 	LCD_init();
 	setUpKeypad();
 
 	//Welcome screen
     displayWelcome();
-	delay_ms(3000);
+	delay_ms(30000);
 	//-------------
 
     TA2_IRQ_Init();         //TA2 interrupt initialization
@@ -57,7 +58,7 @@ void main(void)
 	            state = MAIN_MENU;
 	        break;
 	        case MAIN_MENU:
-	            //display_main_menu();
+	            display_main_menu();
 	            if(key == 1) {
 	                if(cash >= ITEM_1_COST) {
 	                    dispense_menu(key, 1, ITEM_1_COST);
@@ -153,36 +154,20 @@ void greenLED(int state) {
 }
 
 void display_main_menu() {
-    char str1[8] = {'C', 'a', 's', 'h', ':', ' ', ' ', '$'};
-    char str2[12] = {'S', 'e', 'l', 'e', 'c', 't', 'i', 'o', 'n', ':', ' ', '_'};
-    char str3[8] = {'[', '*', ']', 'A', 'd', 'm', 'i', 'n'};
     char cashBuffer[5] = {0};
 
-    //sprintf(cashBuffer, "%4.2lf/0", cash);
+    sprintf(cashBuffer, "%4.2lf", cash);
 
-    int k = 0;
     commandWrite(0x80);         //Address  80
 
-    for(k = 0; k < 8; k++) {
-        dataWrite(str1[k]);
-        delay_us(1);
-    }
-    for(k = 0; k < 4; k++) {
-        dataWrite(cashBuffer[k]);
-        delay_us(1);
-    }
+    writeString("Cash:  $");
+    writeString(cashBuffer);
 
     commandWrite(0xC0);         //Address  C0
-    for(k = 0; k < 12; k++) {
-        dataWrite(str2[k]);
-        delay_us(1);
-    }
+    writeString("Selection: _");
 
     commandWrite(0xD0);         //Address D0
-    for(k = 0; k < 8; k++) {
-        dataWrite(str3[k]);
-        delay_us(1);
-    }
+    writeString("[*]Admin");
     return;
 }
 
@@ -193,47 +178,22 @@ void dispense_menu(int selection, int enough, double price) {
     totChange = cash - price;
     totNeed = (price - cash);
 
-    char dispMenu[65] = {0};
 
     if(enough == 1) {
-        sprintf(dispMenu, "Cash:  $%4.2lf     Selection: %d    Dispensed       Change: %4.2lf", cash, key, totChange);
-        strcpy(nextDisplay, dispMenu);
+
     }
     else {
-        sprintf(dispMenu, "Cash:  $%4.2lf     Selection: %d", cash, key);
-        strcpy(nextDisplay, dispMenu);
+
     }
 }
 
 void displayWelcome() {
-    commandWrite(0x02);
-    char name1[4] = {'L', 'U', 'K', 'E'};       //Partner 1 name
-    char name2[5] = {'B', 'R', 'I', 'A', 'N'};  //Partner 2 name
-    char vend[16] = {'V', 'E', 'N', 'D', 'I', 'N', 'G', ' ', 'M', 'A', 'C', 'H', 'I', 'N', 'E', '!'};
-
-    strcpy(nextDisplay, "    Luke         Brian       Vending Machine!");
-    /*
-    int k = 0;
-    commandWrite(0x86);         //Address  86
-
-    for(k = 0; k < 4; k++) {
-        dataWrite(name1[k]);    //Write each letter of LUKE
-        delay_ms(1);
-    }
-
-    commandWrite(0xC5);         //Address  C5
-    for(k = 0; k < 5; k++) {
-        dataWrite(name2[k]);    //Write each letter of BRIAN
-        delay_ms(1);
-    }
-
-    commandWrite(0xD0);         //Address D0
-    for(k = 0; k < 16; k++) {
-        dataWrite(vend[k]);     //Write each letter of VENDING MACHINE
-        delay_ms(1);
-    }
-*/
-    commandWrite(0x0C);     //Turn off cursor
+    commandWrite(0x86);
+    writeString("LUKE");
+    commandWrite(0xC5);
+    writeString("BRIAN");
+    commandWrite(0xD0);
+    writeString("VENDING MACHINE!");
 }
 
 /***| TA2_IRQ_Init() |************************************//*
