@@ -161,6 +161,7 @@ void greenLED(int state) {
 }
 
 void display_main_menu() {
+    count = 4;
     char cashBuffer[5] = {0};
     commandWrite(0x01); //Clear display
 
