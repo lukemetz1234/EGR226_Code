@@ -56,7 +56,7 @@ void LCD_init(void)
   commandWrite(0x02);
   commandWrite(0x06);   //2 line 5x7 format
   delay_micro(100);
-  commandWrite(0x0F);   //Display on, cursor on, blinking
+  commandWrite(0x0C);   //Display on, cursor off, blinking off
   delay_micro(100);
   commandWrite(0x01);   //Clears display
   delay_micro(100);

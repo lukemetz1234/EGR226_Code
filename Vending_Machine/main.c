@@ -15,6 +15,8 @@ void display_main_menu();
 void dispense_menu(int selection, int enough, double price);
 void TA2_IRQ_Init();
 void TA2_N_IRQHandler();
+void setupTimerA3();
+void TA3_N_IRQHandler();
 
 
 #define MAIN_MENU       1
@@ -31,8 +33,9 @@ void TA2_N_IRQHandler();
 
 
 uint8_t state = 0;
-double cash = 0.75;
+double cash = 2.75;
 int8_t key = -1;
+uint8_t count = 0;
 
 void main(void)
 {
@@ -48,6 +51,7 @@ void main(void)
 	//-------------
 
     TA2_IRQ_Init();         //TA2 interrupt initialization
+    setupTimerA3();
     NVIC_EnableIRQ(PORT5_IRQn);
     __enable_interrupts();
 
@@ -55,10 +59,13 @@ void main(void)
 	    switch(state) {
 	        case 0:
 	            commandWrite(0x01);   //Clears display
+	            display_main_menu();
 	            state = MAIN_MENU;
 	        break;
 	        case MAIN_MENU:
-	            display_main_menu();
+	            if(count == 3) {
+	                display_main_menu();
+	            }
 	            if(key == 1) {
 	                if(cash >= ITEM_1_COST) {
 	                    dispense_menu(key, 1, ITEM_1_COST);
@@ -155,6 +162,7 @@ void greenLED(int state) {
 
 void display_main_menu() {
     char cashBuffer[5] = {0};
+    commandWrite(0x01); //Clear display
 
     sprintf(cashBuffer, "%4.2lf", cash);
 
@@ -172,19 +180,45 @@ void display_main_menu() {
 }
 
 void dispense_menu(int selection, int enough, double price) {
+    char cashBuffer[5] = {0};
+    char changeBuffer[5] = {0};
+    char needBuffer[6] = {0};
+    char selectionBuffer[1] = {0};
+
     double totChange = 0.0;
     double totNeed = 0.0;
 
     totChange = cash - price;
     totNeed = (price - cash);
 
+    sprintf(cashBuffer, "%4.2lf", cash);
+    sprintf(changeBuffer, "%4.2lf", totChange);
+    sprintf(needBuffer, "%4.2lf", totNeed);
+    sprintf(selectionBuffer, "%d", selection);
+
+    commandWrite(0x80);         //Address  80
+    writeString("Cash:  $");
+    writeString(cashBuffer);
+    commandWrite(0xC0);         //Address  C0
+    writeString("Selection: ");
+    writeString(selectionBuffer);
 
     if(enough == 1) {
-
+        commandWrite(0x90);
+        writeString("Dispensed ");
+        commandWrite(0xD0);
+        writeString("Change: $");
+        writeString(changeBuffer);
     }
     else {
-
+        commandWrite(0x90);
+        writeString("Broke bitch");
+        commandWrite(0xD0);
+        writeString("Need  $");
+        writeString(needBuffer);
+        writeString("   ");
     }
+    count = 0;
 }
 
 void displayWelcome() {
@@ -223,3 +257,31 @@ void TA2_N_IRQHandler()
     key = getKey();
     TIMER_A2->CTL &= ~BIT0; //clear interrupt
 }
+
+void setupTimerA3()
+{
+    //Four TimerAs exist, using the first one
+    // Set up a 1 second timer
+    // bits 15-10 are reserved = 000000
+    // bits 9-8 are for clock = 10 (SMCLK)
+    // bits 7-6 are for divider of 8 = 11
+    // bits 5-4 are for mode, up mode = 01
+    // bit 3 is reserved = 0
+    // bit 2 is clear count value TAR = 1
+    // bit 1 is for interrupt enable = 1
+    // bit 0 is for the interrupt flag = 0
+    TIMER_A3->CTL = 0b0000001011010110;
+    TIMER_A3->EX0 = 0b111; //111 = divide by 8
+    TIMER_A3->CCR[0] = 46875; //
+    //TIMER_A0->CCTL[0] = 0;
+
+    TIMER_A3->CTL &= ~BIT0;  // Clear flag
+    NVIC_EnableIRQ(TA3_N_IRQn);
+}
+
+void TA3_N_IRQHandler() {
+    count++;
+    printf("%d\n", count);
+    TIMER_A3->CTL &= ~BIT0;
+}
+
