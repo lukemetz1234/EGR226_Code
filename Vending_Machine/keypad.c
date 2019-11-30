@@ -9,27 +9,6 @@ void setUpKeypad();
 void PORT5_IRQHandler();
 void defaultState();
 
-/*
-void main(void)
-{
-    WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;     // stop watchdog timer
-    NVIC_EnableIRQ(PORT5_IRQn);
-    __enable_interrupts();
-    setUpKeypad();
-    defaultState();
-
-    while(1) {
-        __delay_cycles(300);
-        if(reg != 0x00)
-            keyP = -1;
-        if(keyP != -1) {
-            printf("Key = %d\n", keyP);
-        }
-        reg = reg << 1;
-        reg |= 1;
-    }
-}
-*/
 int getKey() {
     if(reg != 0x00)
         keyP = -1;
