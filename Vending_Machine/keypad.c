@@ -48,18 +48,15 @@ void defaultState() {
 
 void PORT5_IRQHandler(){
     setUpKeypad();
-    //__delay_cycles(30);
 
     if((P5->IN & BIT6) ==  0) {
         //Column 1
         P5->DIR |= (BIT6|BIT1|BIT2);   //Output
         P5->OUT &= ~(BIT6|BIT1|BIT2);    //Output a 0
-        //__delay_cycles(30);
 
         P2->DIR &= ~(BIT4|BIT5|BIT6|BIT7);   //Input
         P2->REN |= (BIT4|BIT5|BIT6|BIT7);    //Enables internal resistor
         P2->OUT |= (BIT4|BIT5|BIT6|BIT7);    //Pull up
-        //__delay_cycles(30);
 
         if((P2->IN & BIT4) == 0) {
             while(1) {
@@ -138,13 +135,11 @@ void PORT5_IRQHandler(){
         //Column 2
         P5->DIR |= (BIT6|BIT1|BIT2);   //Output
         P5->OUT &= ~(BIT6|BIT1|BIT2);    //Output a 0
-        //__delay_cycles(30);
 
         P2->DIR &= ~(BIT4|BIT5|BIT6|BIT7);   //Input
         P2->REN |= (BIT4|BIT5|BIT6|BIT7);    //Enables internal resistor
         P2->OUT |= (BIT4|BIT5|BIT6|BIT7);    //Pull up
 
-        //__delay_cycles(30);
         if((P2->IN & BIT4) == 0) {
             while(1) {
                 if((P2->IN & BIT4) == 0)
@@ -222,12 +217,10 @@ void PORT5_IRQHandler(){
         //Column 3
         P5->DIR |= (BIT6|BIT1|BIT2);   //Output
         P5->OUT &= ~(BIT6|BIT1|BIT2);    //Output a 0
-        //__delay_cycles(30);
 
         P2->DIR &= ~(BIT4|BIT5|BIT6|BIT7);   //Input
         P2->REN |= (BIT4|BIT5|BIT6|BIT7);    //Enables internal resistor
         P2->OUT |= (BIT4|BIT5|BIT6|BIT7);    //Pull up
-        //__delay_cycles(30);
 
         if((P2->IN & BIT4) == 0) {
             while(1) {
@@ -306,6 +299,5 @@ void PORT5_IRQHandler(){
         keyP = -1;
     }
     setUpKeypad();
-    //__delay_cycles(30);
     P5->IFG &= ~(BIT6|BIT1|BIT2);       //clear (Acknowledge) flag
 }

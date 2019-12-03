@@ -8,6 +8,7 @@
 
 void dispense(int item);
 void return_Change(int change);
+void motorPinInit();
 void ledPinInit();
 void redLED(int state);
 void greenLED(int state);
@@ -16,11 +17,15 @@ void display_adminPass_menu();
 void display_admin_menu();
 void display_main_menu();
 void readPassword(int keyPress);
+void updateCash();
 void dispense_menu(int selection, int enough, double price);
+void outOfStock_menu();
 void print_inventory();
 void tempSetup();
 void PORT5_IRQHandler();
-void TA2_IRQ_Init();
+void setupTimerA1();
+void TA1_N_IRQHandler();
+void setupTimerA2();
 void TA2_N_IRQHandler();
 void setupTimerA3();
 void TA3_N_IRQHandler();
@@ -49,6 +54,7 @@ double cash = 2.75;
 double cashInMachine = 0.00;
 int8_t key = -1;
 uint8_t noKey = 0;
+uint8_t motorCount = 0;
 uint8_t count = 0;
 uint8_t passPosition = 0;
 uint8_t blink = 0;
@@ -57,23 +63,27 @@ char tempBuffer[5] = {0};
 char pin[4];
 char password[4] = {1, 2, 3, 4};
 
-void main(void)
-{
+void main(void){
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
 
+	//--------Pin initializations--------------
 	LCDpin_init();
 	LCD_init();
 	ledPinInit();
+	motorPinInit();
 	setUpKeypad();
 	tempSetup();
+	//-----------------------------------------
 
-	//Welcome screen
+	//-----------Welcome screen----------------
     displayWelcome();
 	delay_ms(30000);
-	//-------------
+	//-----------------------------------------
 
-    TA2_IRQ_Init();         //TA2 interrupt initialization
-    setupTimerA3();
+	setupTimerA1();     //TA1 initialization
+	setupTimerA2();     //TA2 initialization
+    setupTimerA3();     //TA3 initialization
+
     NVIC_EnableIRQ(PORT5_IRQn);
     NVIC_EnableIRQ(PORT3_IRQn);
     __enable_interrupts();
@@ -94,7 +104,10 @@ void main(void)
 	                display_main_menu();
 	            }
 	            if(key == 1) {
-	                if(cash >= ITEM_1_COST) {
+	                if(item1_stock <= 0) {
+	                    outOfStock_menu();
+	                }
+	                else if(cash >= ITEM_1_COST) {
 	                    dispense_menu(key, 1, ITEM_1_COST);
 	                    dispense(1);
 	                    --item1_stock;
@@ -106,7 +119,10 @@ void main(void)
 	                }
 	            }
 	            else if(key == 2) {
-	                if(cash >= ITEM_2_COST) {
+                    if(item2_stock <= 0) {
+                        outOfStock_menu();
+                    }
+                    else if(cash >= ITEM_2_COST) {
 	                    dispense_menu(key, 1, ITEM_2_COST);
 	                    dispense(2);
 	                    --item2_stock;
@@ -118,7 +134,10 @@ void main(void)
 	                }
 	            }
 	            else if(key == 3) {
-	                if(cash >= ITEM_3_COST) {
+                    if(item3_stock <= 0) {
+                        outOfStock_menu();
+                    }
+                    else if(cash >= ITEM_3_COST) {
 	                    dispense_menu(key, 1, ITEM_3_COST);
 	                    dispense(3);
 	                    --item3_stock;
@@ -130,7 +149,10 @@ void main(void)
                     }
 	            }
 	            else if(key == 4) {
-	                if(cash >= ITEM_4_COST) {
+                    if(item4_stock <= 0) {
+                        outOfStock_menu();
+                    }
+                    else if(cash >= ITEM_4_COST) {
 	                    dispense_menu(key, 1, ITEM_4_COST);
 	                    dispense(4);
 	                    --item4_stock;
@@ -152,7 +174,7 @@ void main(void)
 	                passPosition = 0;
 	                if((password[0] == pin[0]) && (password[0] == pin[0]) && (password[1] == pin[1]) && (password[2] == pin[2]) && (password[3] == pin[3])) {
 	                    display_admin_menu();
-	                    memset(pin,0,sizeof(pin));  //Clear pin array to 0's
+	                    memset(pin,0,sizeof(pin));  //Clear password array to 0's
 	                    state = ADMIN_MENU;
 	                }
 	                else {
@@ -232,26 +254,34 @@ void main(void)
             default:
                 state = MAIN_MENU;
             break;
-
 	    }
-
 	}
-
 }
 
 
 //Dispenses desired item
 void dispense(int item) {
-
-
+    if(item == 1) {
+        P4->OUT |= BIT4;
+    }
+    else if(item == 2) {
+        P4->OUT |= BIT5;
+    }
+    else if(item == 3) {
+        P4->OUT |= BIT6;
+    }
+    else if(item == 4) {
+        P4->OUT |= BIT7;
+    }
+    motorCount = 0;
 }
 
 //Returns correct change
 void return_Change(int change) {
 
-
 }
 
+//Turns on red LED
 void redLED(int state) {
     if(state == 0) {
         P1->OUT &= ~BIT7;
@@ -261,6 +291,7 @@ void redLED(int state) {
     }
 }
 
+//Turns on green LED
 void greenLED(int state) {
     if(state == 0) {
         P1->OUT &= ~BIT6;
@@ -270,17 +301,25 @@ void greenLED(int state) {
     }
 }
 
+
+void motorPinInit() {
+    P4->SEL0 &= ~(BIT4|BIT5|BIT6|BIT7);
+    P4->SEL1 &= ~(BIT4|BIT5|BIT6|BIT7);
+    P4->DIR |=   (BIT4|BIT5|BIT6|BIT7);     //Output
+    P4->OUT &=  ~(BIT4|BIT5|BIT6|BIT7);     //Off
+}
+
 void ledPinInit() {
     P1->SEL0 &= ~(BIT6|BIT7);
     P1->SEL1 &= ~(BIT6|BIT7);
     P1->DIR |= (BIT6|BIT7);   //Output
     P1->OUT &= ~(BIT6|BIT7);
 
-    P3->SEL0 &= ~BIT0;
+    P3->SEL0 &= ~BIT0;  //IR LED
     P3->SEL1 &= ~BIT0;
     P3->DIR &= ~BIT0;   //input
     P3->REN |= BIT0;
-    P3->OUT &= ~BIT0;
+    P3->OUT |= BIT0;
     P3->IE |= BIT0;
 }
 
@@ -340,6 +379,18 @@ void display_main_menu() {
     return;
 }
 
+//Updates the cash displayed in the main menu when a coin is detected
+void updateCash() {
+    char cashBuffer[5] = {0};
+
+    if(state == MAIN_MENU) {
+        sprintf(cashBuffer, "%4.2lf", cash);
+        commandWrite(0x80);         //Address  80
+        writeString("Cash:  $");
+        writeString(cashBuffer);
+    }
+}
+
 void dispense_menu(int selection, int enough, double price) {
     blink = 0;
     noKey = 1;
@@ -388,6 +439,18 @@ void dispense_menu(int selection, int enough, double price) {
     count = 0;
 }
 
+void outOfStock_menu() {
+    blink = 0;
+    commandWrite(0x01);     //Clear display
+    commandWrite(0x80);
+    writeString(" Out of stock!");
+    commandWrite(0x90);
+    writeString("  Make another");
+    commandWrite(0xD0);
+    writeString("   selection.");
+    count = 0;
+}
+
 void print_inventory() {
     char inv1Buffer[16] = {0};
     char inv2Buffer[16] = {0};
@@ -426,20 +489,41 @@ void tempSetup() {
 
 void PORT3_IRQHandler(){
     if((P3->IN & BIT0) == 0) {
-        printf("TRIGGERED\n");
+        cash = cash + 0.25;
+        updateCash();
     }
-
     P3->IFG &= ~BIT0;       //clear (Acknowledge) flag
 }
 
-/***| TA2_IRQ_Init() |************************************//*
+void setupTimerA1()
+{
+    TIMER_A1->CTL = 0b0000001011010110;
+    TIMER_A1->EX0 = 0b111; //111 = divide by 8
+    TIMER_A1->CCR[0] = 46875; //
+
+    TIMER_A1->CTL &= ~BIT0;  // Clear flag
+    NVIC_EnableIRQ(TA1_N_IRQn);
+}
+
+void TA1_N_IRQHandler()
+{
+    if(motorCount == 2) {
+        P4->OUT &= ~(BIT4|BIT5|BIT6|BIT7);      //Stop motor
+        motorCount = 9;
+    }
+    printf("M count = %d\n", motorCount);
+    ++motorCount;
+    TIMER_A1->CTL &= ~BIT0; //clear interrupt
+}
+
+/***| setupTimerA2() |************************************//*
 *Brief:    This function initializes TA2 as an interrupt
 *Params:
 *            null
 *Returns:
 *            null
 ********************************************************/
-void TA2_IRQ_Init()
+void setupTimerA2()
 {
     TIMER_A2->EX0 = 2;                      //divide by 3
     TIMER_A2->CTL = 0b0000001011010110;     // interrupt enable, /8, up mode, SMCLK
@@ -480,7 +564,6 @@ void setupTimerA3()
     TIMER_A3->CTL = 0b0000001011010110;
     TIMER_A3->EX0 = 0b111; //111 = divide by 8
     TIMER_A3->CCR[0] = 46875; //
-    //TIMER_A0->CCTL[0] = 0;
 
     TIMER_A3->CTL &= ~BIT0;  // Clear flag
     NVIC_EnableIRQ(TA3_N_IRQn);
