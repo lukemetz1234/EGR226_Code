@@ -133,11 +133,18 @@ void pulseEnablePin() {
     P6->OUT &= ~BIT1;   //Set P6.1 to 0
 }
 
+
+/***| writeString(char *string) |************************************//*
+*Brief:    This function writes the characters of a string to the display
+*Params:
+*            string : string to be printed
+*Returns:
+*            null
+********************************************************/
 void writeString(char *string)
 {
     int i = 0;
-    while(string[i] != '\0')
-    {
+    while(string[i] != '\0') {
         dataWrite(string[i]);
         i++;
     }
